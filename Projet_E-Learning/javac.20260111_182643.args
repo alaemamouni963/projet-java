@@ -1,0 +1,6 @@
+-cp
+bin
+-d
+bin
+patterns\\ContentFactory.java
+patterns\\GradingStrategy.java

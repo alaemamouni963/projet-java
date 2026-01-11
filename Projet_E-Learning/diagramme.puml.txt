@@ -1,0 +1,473 @@
+@startuml
+' ================ EN-TÊTE ================
+title Diagramme de Classes - Plateforme E-Learning
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+left to right direction
+
+' ================ PACKAGES ================
+package "model" {
+  package "enums" {
+    enum Category {
+      PROGRAMMING
+      MATHEMATICS
+      SCIENCE
+      BUSINESS
+      ARTS
+      LANGUAGES
+    }
+    
+    enum Level {
+      BEGINNER
+      INTERMEDIATE
+      ADVANCED
+      EXPERT
+    }
+    
+    enum Role {
+      ADMIN
+      PROFESSOR
+      STUDENT
+    }
+    
+    enum QuestionType {
+      MULTIPLE_CHOICE
+      TRUE_FALSE
+      OPEN_QUESTION
+    }
+    
+    enum ContentType {
+      VIDEO
+      DOCUMENT
+      QUIZ
+    }
+  }
+  
+  ' ================ CLASSES ABSTRAITES ================
+  abstract class User {
+    # id: int
+    # username: String
+    # email: String
+    # password: String
+    # firstName: String
+    # lastName: String
+    # role: Role
+    # registrationDate: LocalDate
+    # isActive: boolean
+    # notifications: List<Notification>
+    --
+    + getId(): int
+    + getUsername(): String
+    + getEmail(): String
+    + getFullName(): String
+    + getRole(): Role
+    + isActive(): boolean
+    + addNotification(Notification): void
+    # abstract hasPermission(String): boolean
+  }
+  
+  abstract class Content {
+    # title: String
+    # description: String
+    # type: ContentType
+    # duration: int
+    # isCompleted: boolean
+    --
+    + display(): void
+    + getTitle(): String
+    + getType(): ContentType
+    + isCompleted(): boolean
+    + setCompleted(boolean): void
+  }
+  
+  ' ================ HIÉRARCHIE USER ================
+  class Administrator {
+    --
+    + Administrator(int, String, String, String)
+    + hasPermission(String): boolean
+  }
+  
+  class Professor {
+    - title: String
+    - department: String
+    - createdCourses: List<Course>
+    --
+    + Professor(int, String, String, String)
+    + addCourse(Course): void
+    + getCreatedCourses(): List<Course>
+    + hasPermission(String): boolean
+  }
+  
+  class Student {
+    - enrollments: List<Enrollment>
+    - courseProgress: Map<Integer, Double>
+    - certificates: List<Certificate>
+    - badges: List<Badge>
+    - achievements: List<Achievement>
+    - totalLearningHours: double
+    - examResults: Map<Integer, List<ExamResult>>
+    - bio: String
+    --
+    + Student(int, String, String, String)
+    + addEnrollment(Enrollment): void
+    + updateCourseProgress(int, double): void
+    + addCertificate(Certificate): void
+    + addBadge(Badge): void
+    + getCourseProgress(int): double
+    + getCertificates(): List<Certificate>
+    + getBadges(): List<Badge>
+    + isEnrolledInCourse(int): boolean
+    + hasPermission(String): boolean
+  }
+  
+  ' ================ HIÉRARCHIE CONTENT ================
+  class VideoContent {
+    --
+    + VideoContent(String, String, int)
+    + display(): void
+  }
+  
+  class DocumentContent {
+    --
+    + DocumentContent(String, String, int)
+    + display(): void
+  }
+  
+  class QuizContent {
+    - numberOfQuestions: int
+    --
+    + QuizContent(String, String, int)
+    + display(): void
+    + setNumberOfQuestions(int): void
+  }
+  
+  ' ================ COURS ET STRUCTURE ================
+  class Course {
+    - id: int
+    - title: String
+    - description: String
+    - category: Category
+    - level: Level
+    - professor: Professor
+    - modules: List<CourseModule>
+    - enrolledStudents: List<Student>
+    - creationDate: LocalDate
+    - price: double
+    - isCertifiable: boolean
+    - passingScore: double
+    --
+    + Course(int, String, String, Category, Level, Professor)
+    + addModule(CourseModule): void
+    + addStudent(Student): void
+    + getId(): int
+    + getTitle(): String
+    + getProfessor(): Professor
+    + getModules(): List<CourseModule>
+    + getEnrolledStudents(): List<Student>
+  }
+  
+  class CourseModule {
+    - id: int
+    - title: String
+    - description: String
+    - order: int
+    - lessons: List<Lesson>
+    --
+    + CourseModule(int, String, String, int)
+    + addLesson(Lesson): void
+    + getId(): int
+    + getTitle(): String
+    + getLessons(): List<Lesson>
+  }
+  
+  class Lesson {
+    - id: int
+    - title: String
+    - description: String
+    - duration: int
+    - contents: List<Content>
+    --
+    + Lesson(int, String, String, int)
+    + addContent(Content): void
+    + getId(): int
+    + getTitle(): String
+    + getDuration(): int
+    + getContents(): List<Content>
+  }
+  
+  ' ================ EXAMENS ET QUESTIONS ================
+  class Exam {
+    - id: int
+    - title: String
+    - course: Course
+    - questions: List<Question>
+    - startDate: LocalDateTime
+    - endDate: LocalDateTime
+    - duration: int
+    - passingScore: double
+    --
+    + Exam(int, String, Course, int)
+    + addQuestion(Question): void
+    + getId(): int
+    + getTitle(): String
+    + getCourse(): Course
+    + getQuestions(): List<Question>
+  }
+  
+  class Question {
+    - id: String
+    - text: String
+    - options: List<String>
+    - correctAnswer: String
+    - type: QuestionType
+    - points: double
+    --
+    + Question(QuestionType, String, List<String>, String, double)
+    + isCorrect(String): boolean
+    + getId(): String
+    + getText(): String
+    + getOptions(): List<String>
+    + getType(): QuestionType
+  }
+  
+  class ExamResult {
+    - exam: Exam
+    - student: Student
+    - answers: List<String>
+    - score: double
+    - passed: boolean
+    - submissionDate: LocalDateTime
+    --
+    + ExamResult(Exam, Student, List<String>, double, boolean)
+    + getExam(): Exam
+    + getStudent(): Student
+    + getScore(): double
+    + isPassed(): boolean
+  }
+  
+  ' ================ AUTRES CLASSES ================
+  class Certificate {
+    - id: String
+    - student: Student
+    - course: Course
+    - score: double
+    - issueDate: LocalDate
+    --
+    + Certificate(Student, Course, double)
+    + generateCertificateText(): String
+    + getId(): String
+    + getStudent(): Student
+    + getCourse(): Course
+    + getScore(): double
+    + getIssueDate(): LocalDate
+  }
+  
+  class Enrollment {
+    - student: Student
+    - course: Course
+    - enrollmentDate: LocalDate
+    --
+    + Enrollment(Student, Course, LocalDate)
+    + getStudent(): Student
+    + getCourse(): Course
+    + getEnrollmentDate(): LocalDate
+  }
+  
+  class Notification {
+    - title: String
+    - message: String
+    - timestamp: LocalDateTime
+    - isRead: boolean
+    --
+    + Notification(String, String)
+    + markAsRead(): void
+    + getTitle(): String
+    + getMessage(): String
+    + isRead(): boolean
+  }
+  
+  class Badge {
+    - name: String
+    - description: String
+    - icon: String
+    --
+    + Badge(String, String)
+    + getName(): String
+    + getDescription(): String
+    + getIcon(): String
+  }
+  
+  class Achievement {
+    - name: String
+    - description: String
+    - points: int
+    --
+    + Achievement(String, String, int)
+    + getName(): String
+    + getDescription(): String
+    + getPoints(): int
+  }
+}
+
+package "dao" {
+  class Database {
+    - instance: Database
+    - users: Map<Integer, User>
+    - courses: Map<Integer, Course>
+    - exams: Map<Integer, Exam>
+    - sessions: Map<String, String>
+    --
+    - Database()
+    + getInstance(): Database
+    + saveUser(User): void
+    + getUserById(int): User
+    + getUserByUsername(String): User
+    + getUserBySession(String): User
+    + getAllUsers(): List<User>
+    + saveCourse(Course): void
+    + getCourseById(int): Course
+    + getAllCourses(): List<Course>
+    + saveExam(Exam): void
+    + getExamById(int): Exam
+    + getExamByCourseId(int): Exam
+    + createSession(String, String): void
+    + removeSession(String): void
+    + getTotalUsers(): int
+    + getStudentCount(): int
+    + getProfessorCount(): int
+  }
+}
+
+package "service" {
+  class UserService {
+    - db: Database
+    --
+    + UserService()
+    + registerStudent(String, String, String): Student
+    + registerProfessor(String, String, String): Professor
+    + login(String, String): String
+    + logout(String): void
+  }
+  
+  class CourseService {
+    - db: Database
+    --
+    + CourseService()
+    + createCourse(String, String, Category, Level, Professor): Course
+    + enrollStudent(Student, int): void
+    + getAverageCompletion(Course): double
+  }
+  
+  class ExamService {
+    - db: Database
+    --
+    + ExamService()
+    + corrigerExamen(List<Question>, List<String>): double
+    + creerExamen(String, Course, int): Exam
+  }
+  
+  class StatisticsService {
+    - db: Database
+    --
+    + StatisticsService()
+    + getTotalUsers(): int
+    + getStudentCount(): int
+    + getProfessorCount(): int
+    + getTotalCourses(): int
+    + getAverageCompletionRate(): double
+  }
+}
+
+package "patterns" {
+  class ContentFactory {
+    --
+    + ContentFactory()
+    + createContent(ContentType, String, String, int): Content
+  }
+  
+  interface GradingStrategy {
+    + calculateScore(List<Question>, List<String>): double
+  }
+  
+  class StandardGrading {
+    --
+    + StandardGrading()
+    + calculateScore(List<Question>, List<String>): double
+  }
+  
+  class NegativeMarkingGrading {
+    --
+    + NegativeMarkingGrading()
+    + calculateScore(List<Question>, List<String>): double
+  }
+}
+
+package "utils" {
+  class Validator {
+    --
+    + isValidEmail(String): boolean
+    + isValidPassword(String): boolean
+  }
+  
+  class PasswordHasher {
+    --
+    + hash(String): String
+    + verify(String, String): boolean
+  }
+  
+  class PDFGenerator {
+    --
+    + generateStudentProgressReport(Student): void
+  }
+  
+  class I18n {
+    - currentLocale: Locale
+    - messages: ResourceBundle
+    --
+    + setLanguage(String): void
+    + getString(String): String
+    + getCurrentLanguage(): String
+  }
+}
+
+' ================ RELATIONS D'HÉRITAGE ================
+User <|-- Administrator
+User <|-- Professor
+User <|-- Student
+
+Content <|-- VideoContent
+Content <|-- DocumentContent
+Content <|-- QuizContent
+
+GradingStrategy <|.. StandardGrading
+GradingStrategy <|.. NegativeMarkingGrading
+
+' ================ RELATIONS D'ASSOCIATION ================
+Professor "1" -- "*" Course : crée
+Student "*" -- "*" Course : suit
+Course "1" -- "*" CourseModule : contient
+CourseModule "1" -- "*" Lesson : contient
+Lesson "1" -- "*" Content : contient
+Course "1" -- "1" Exam : a pour examen
+Exam "1" -- "*" Question : contient
+Student "*" -- "*" ExamResult : obtient
+Student "*" -- "*" Certificate : reçoit
+Student "*" -- "*" Badge : gagne
+Student "*" -- "*" Achievement : accomplit
+Student "*" -- "*" Enrollment : inscription
+Course "*" -- "*" Enrollment : inscrit
+
+' ================ RELATIONS DE DÉPENDANCE ================
+UserService ..> Database : utilise
+UserService ..> Validator : utilise
+UserService ..> PasswordHasher : utilise
+CourseService ..> Database : utilise
+ExamService ..> Database : utilise
+StatisticsService ..> Database : utilise
+ContentFactory ..> Content : crée
+Main ..> UserService : utilise
+Main ..> CourseService : utilise
+Main ..> ExamService : utilise
+Main ..> StatisticsService : utilise
+
+@enduml
